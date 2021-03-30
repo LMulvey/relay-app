@@ -1,5 +1,4 @@
 import React from 'react';
-import './App.css';
 import graphql from 'babel-plugin-relay/macro';
 import {
   RelayEnvironmentProvider,
@@ -7,6 +6,7 @@ import {
   usePreloadedQuery,
 } from 'react-relay/hooks';
 import RelayEnvironment from './helpers/relay';
+import { themeClass, bodyStyle } from './styles/styles.css.ts';
 
 const { Suspense } = React;
 
@@ -39,8 +39,8 @@ const preloadedQuery = loadQuery(RelayEnvironment, RepositoryNameQuery, {
 //   handling the failure case here.
 function App(props) {
   return (
-    <div className="App">
-      <header className="App-header">{props.children}</header>
+    <div className={themeClass}>
+      <header className={bodyStyle}>{props.children}</header>
     </div>
   );
 }
