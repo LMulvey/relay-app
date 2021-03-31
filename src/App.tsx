@@ -1,12 +1,15 @@
-import React from 'react';
+import * as React from 'react';
 import graphql from 'babel-plugin-relay/macro';
 import {
   RelayEnvironmentProvider,
   loadQuery,
   usePreloadedQuery,
 } from 'react-relay/hooks';
+import type { PreloadedQuery } from 'react-relay/hooks';
 import RelayEnvironment from './helpers/relay';
-import { themeClass, bodyStyle } from './styles/styles.css.ts';
+import { themeClass, bodyStyle } from './styles/styles.css';
+import { Children } from './types';
+import { AppRepositoryNameQuery } from './__generated__/AppRepositoryNameQuery.graphql';
 
 const { Suspense } = React;
 
@@ -23,12 +26,20 @@ const RepositoryNameQuery = graphql`
   }
 `;
 
+export interface RepoNameQuery {
+  preloadedQuery: PreloadedQuery<AppRepositoryNameQuery>;
+}
+
 // Immediately load the query as our app starts. For a real app, we'd move this
 // into our routing configuration, preloading data as we transition to new routes.
-const preloadedQuery = loadQuery(RelayEnvironment, RepositoryNameQuery, {
-  owner: 'LMulvey',
-  name: 'portfolio-v3',
-});
+const preloadedQuery = loadQuery<AppRepositoryNameQuery>(
+  RelayEnvironment,
+  RepositoryNameQuery,
+  {
+    owner: 'LMulvey',
+    name: 'portfolio-v3',
+  }
+);
 
 // Inner component that reads the preloaded query results via `usePreloadedQuery()`.
 // This works as follows:
@@ -37,7 +48,7 @@ const preloadedQuery = loadQuery(RelayEnvironment, RepositoryNameQuery, {
 //   ready to render yet). This will show the nearest <Suspense> fallback.
 // - If the query failed, it throws the failure error. For simplicity we aren't
 //   handling the failure case here.
-function App(props) {
+function App(props: Children) {
   return (
     <div className={themeClass}>
       <header className={bodyStyle}>{props.children}</header>
@@ -45,13 +56,20 @@ function App(props) {
   );
 }
 
-function RepoName(props) {
-  const data = usePreloadedQuery(RepositoryNameQuery, props.preloadedQuery);
+function RepoName(props: RepoNameQuery) {
+  const data = usePreloadedQuery<AppRepositoryNameQuery>(
+    RepositoryNameQuery,
+    props.preloadedQuery
+  );
   return (
     <p>
-      {data.repository.name} by{' '}
-      <img src={data.repository.owner.avatarUrl} alt={data.repository.name} height="50px" />
-      {data.repository.owner.login}
+      {data?.repository?.name} by{' '}
+      <img
+        src={data?.repository?.owner?.avatarUrl}
+        alt={data?.repository?.name}
+        height="50px"
+      />
+      {data?.repository?.owner.login}
     </p>
   );
 }
@@ -61,7 +79,7 @@ function RepoName(props) {
 // - <RelayEnvironmentProvider> tells child components how to talk to the current
 //   Relay Environment instance
 // - <Suspense> specifies a fallback in case a child suspends.
-function AppRoot(props) {
+function AppRoot() {
   return (
     <RelayEnvironmentProvider environment={RelayEnvironment}>
       <App>
