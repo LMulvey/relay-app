@@ -5,10 +5,10 @@ import {
   loadQuery,
   usePreloadedQuery,
 } from 'react-relay/hooks';
-import type { PreloadedQuery } from 'react-relay/hooks';
+// import type { PreloadedQuery } from 'react-relay/hooks';
+import { useQueryLoader } from 'react-relay';
 import RelayEnvironment from './helpers/relay';
 import { themeClass, bodyStyle } from './styles/styles.css';
-import { Children } from './types';
 import { AppRepositoryNameQuery } from './__generated__/AppRepositoryNameQuery.graphql';
 
 const { Suspense } = React;
@@ -27,7 +27,7 @@ const RepositoryNameQuery = graphql`
 `;
 
 export interface RepoNameQuery {
-  preloadedQuery: PreloadedQuery<AppRepositoryNameQuery>;
+  preloadedQuery: any;
 }
 
 // Immediately load the query as our app starts. For a real app, we'd move this
@@ -48,10 +48,27 @@ const preloadedQuery = loadQuery<AppRepositoryNameQuery>(
 //   ready to render yet). This will show the nearest <Suspense> fallback.
 // - If the query failed, it throws the failure error. For simplicity we aren't
 //   handling the failure case here.
-function App(props: Children) {
+function App() {
+  const [repoQueryRef, repoQuery] = useQueryLoader<AppRepositoryNameQuery>(
+    RepositoryNameQuery,
+    preloadedQuery
+  );
+  const changeRepo = React.useCallback(() => {
+    const repos: string[] = ['react-filter', 'portfolio-v3', 'kingsgate'];
+    const randomRepo: string =
+      repos[Math.floor(Math.random() * repos.length + 1)] || repos[0];
+    repoQuery({ owner: 'LMulvey', name: randomRepo });
+  }, [repoQuery]);
+
   return (
     <div className={themeClass}>
-      <header className={bodyStyle}>{props.children}</header>
+      <header className={bodyStyle}>
+        {' '}
+        <Suspense fallback={<h1>Loading, baby!</h1>}>
+          <RepoName preloadedQuery={repoQueryRef} />
+        </Suspense>
+        <button onClick={changeRepo}>Change repo</button>
+      </header>
     </div>
   );
 }
@@ -82,11 +99,7 @@ function RepoName(props: RepoNameQuery) {
 function AppRoot() {
   return (
     <RelayEnvironmentProvider environment={RelayEnvironment}>
-      <App>
-        <Suspense fallback={<h1>Loading, baby!</h1>}>
-          <RepoName preloadedQuery={preloadedQuery} />
-        </Suspense>
-      </App>
+      <App />
     </RelayEnvironmentProvider>
   );
 }
